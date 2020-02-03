@@ -1,3 +1,4 @@
 To run the code:
-#gcc -g -lm -o pwordcount pwordcount.c
-#./pwordcount input.txt
+
+gcc -g -lm -o pwordcount pwordcount.c
+./pwordcount input.txt
