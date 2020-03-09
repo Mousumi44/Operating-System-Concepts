@@ -9,6 +9,7 @@ void input_help()
 	printf("\nfcfs: change the scheduling policy to FCFS");
 	printf("\nsjf: change the scheduling policy to SJF");
 	printf("\npriority: change the scheduling policy to priority");
+	printf("\ntest <benchmark> <policy> <num_of_jobs> <priority_levels>\n     <min_CPU_time> <max_CPU_time>");
 	printf("\nquit: exit AUBatch");
 				
 }

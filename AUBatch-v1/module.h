@@ -13,5 +13,6 @@ void fcfs();
 void sjf();
 void priority();
 void perfEvaluate();
+void garbageCompute();
 
 #endif //MODULE_H

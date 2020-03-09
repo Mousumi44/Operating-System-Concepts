@@ -13,6 +13,9 @@ int tail = 0;
 int total=0;
 int wait_time=0;
 int turn_time=0;
+int cpu_time=0;
+   
+char policy[30];
 
 struct jobQueue
 {  
@@ -36,6 +39,7 @@ void perfEvaluate(char arr_time[],char exec_time[],char comp_time[]){
 	comp = splitColon(comp_time);
 	wait_time = abs(wait_time+(exec-arr));
 	turn_time = abs(turn_time + wait_time+(comp-exec));
+	cpu_time = abs(cpu_time+comp);
 	
 }
 
@@ -55,7 +59,7 @@ void input_run(char input_cmd[])
 		//	sscanf(token, "%d", &job[head].arg2);
 		if (j==3)
 			sscanf(token, "%d", &job[head].burst_time);
-		if (j==3)
+		if (j==4)
 			sscanf(token, "%d", &job[head].priority);
 		j++;
 		token = strtok(NULL, " ");
@@ -64,6 +68,7 @@ void input_run(char input_cmd[])
 		printf("\nWrong command");
 		
 	}
+	printf("job %s was submitted.\n", job[head].name);
 	time_t T=time(NULL);
 	struct tm tm = *localtime(&T);
 	sprintf(job[head].arr_time,"%d:%d:%d",tm.tm_hour, tm.tm_min, tm.tm_sec);
@@ -71,6 +76,10 @@ void input_run(char input_cmd[])
 			count++;
 			head++;
 			total++;
+	printf("Total number of jobs in the queue: %d\n", total);
+	printf("Scheduling Policy: %s\n", policy);
+
+	
 
 }
 void fcfs(){
@@ -181,7 +190,7 @@ void priority(){
 void *scheduling()
 {
 	int i,j;
-	float avg_turntime,avg_waittime,thro;
+	float avg_turntime,avg_waittime,avg_cputime,thro;
 	char *input_cmd1;
 	char input_cmd[50];
     size_t input_size = 32;
@@ -221,26 +230,33 @@ void *scheduling()
 			pthread_mutex_unlock(&cmd_queue_lock);
 		}
 		else if(strcmp(input_cmd,"fcfs")==0){
+			pthread_mutex_lock(&cmd_queue_lock);
+			strcpy(policy,"FCFS");
 			fcfs();
+			pthread_mutex_unlock(&cmd_queue_lock);
 		}
 		else if(strcmp(input_cmd,"sjf")==0){
 			pthread_mutex_lock(&cmd_queue_lock);
+			strcpy(policy,"SJF");
 			sjf();
 			pthread_mutex_unlock(&cmd_queue_lock);
 		}
 		else if(strcmp(input_cmd,"priority")==0){
 			pthread_mutex_lock(&cmd_queue_lock);
+			strcpy(policy,"PRIORITY");
 			priority();
 			pthread_mutex_unlock(&cmd_queue_lock);
 		}
 		else if(strcmp(input_cmd,"quit")==0){
 		avg_turntime = turn_time/total;
 		avg_waittime = wait_time/total;
+		avg_cputime = cpu_time/(total*1000);
 		thro = 1.0/avg_turntime;
 		printf("\nTotal jobs submitted : %d",total);
-		printf("\nAverage waiting time : %f",avg_waittime);
-		printf("\nAverage turn around time : %f",avg_turntime);
-		printf("\nThroughput : %f",thro);
+		printf("\nAverage turn around time : %f seconds",avg_turntime);
+		printf("\nAverage CPU time : %f seconds",avg_cputime);
+		printf("\nAverage waiting time : %f seconds",avg_waittime);
+		printf("\nThroughput : %f No./second\n",thro);
 		exit(0);	
 		}
 		else{
@@ -261,6 +277,7 @@ void *dispatching()
 	
 	 for (i = 0; i <total+1 ; i++) {
 		sleep(20); 
+		garbageCompute();
         pthread_mutex_lock(&cmd_queue_lock);
         
         //printf("\nDispatcher: count = %d", count);
@@ -285,6 +302,7 @@ void *dispatching()
 		}
 		time_t T3=time(NULL);
 		sleep(3);
+		garbageCompute();
 		struct tm tm2 = *localtime(&T3);
 		sprintf(job[tail].comp_time,"%d:%d:%d",tm2.tm_hour, tm2.tm_min, tm2.tm_sec);
 		
@@ -303,5 +321,16 @@ void *dispatching()
        
 	 }
       return NULL;   
+}
+
+void garbageCompute()
+{
+	for (int i=0;i< 10000; i++)
+	{
+		for(int j=0;j<10000;j++)
+		{
+
+		}
+	}
 }
 
