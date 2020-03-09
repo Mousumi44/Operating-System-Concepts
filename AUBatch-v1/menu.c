@@ -4,7 +4,7 @@
 
 void input_help()
 {
-	printf("\nrun <jobname> <burst_time> <priority>: submit a job named <jobname>,\n\t\t\t\t\t execution time is <burst_time>,\n\t\t\t\t\t priority is <priority>.");
+	printf("\nrun <jobname> <burst_time> <priority>:   submit a job named <jobname>,\n\t\t\t\t\t execution time is <burst_time>,\n\t\t\t\t\t priority is <priority>.");
 	printf("\nlist: display the job status");
 	printf("\nfcfs: change the scheduling policy to FCFS");
 	printf("\nsjf: change the scheduling policy to SJF");
