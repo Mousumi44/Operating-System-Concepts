@@ -29,16 +29,17 @@ struct jobQueue
  
 struct jobQueue job[MAX_JOB-1];
 
-void input_help()
-{
-	printf("\nrun <jobname> <burst_time> <priority>: submit a job named <jobname>,\n\t\t\t\t execution time is <burst_time>,\n\t\t\t\t priority is <priority>.");
-	printf("\nlist: display the job status");
-	printf("\nfcfs: change the scheduling policy to FCFS");
-	printf("\nsjf: change the scheduling policy to SJF");
-	printf("\npriority: change the scheduling policy to priority");
-	printf("\nquit: exit AUBatch");
-				
+void perfEvaluate(char arr_time[],char exec_time[],char comp_time[]){
+	
+	int arr;int exec;int comp;
+	arr = splitColon(arr_time);
+	exec= splitColon(exec_time);
+	comp = splitColon(comp_time);
+	wait_time = abs(wait_time+(exec-arr));
+	turn_time = abs(turn_time + wait_time+(comp-exec));
+	
 }
+
 void input_run(char input_cmd[])
 {
 	char cmd[50];
@@ -176,28 +177,7 @@ void priority(){
 	printf("\nScheduling policy is switched to Priority. All the %d waiting jobs have been rescheduled.",count);
 		
 }
-void perfEvaluate(char arr_time[],char exec_time[],char comp_time[]){
-	
-	int arr;int exec;int comp;
-	arr = splitColon(arr_time);
-	exec= splitColon(exec_time);
-	comp = splitColon(comp_time);
-	wait_time = abs(wait_time+(exec-arr));
-	turn_time = abs(turn_time + wait_time+(comp-exec));
-	
-}
-int splitColon(char time[]){
-	char t[30]="";
-	char *token = strtok(time, ":");
-	int stoi;
-	while (token != NULL)
-	{
-		strcat(t,token);
-		token = strtok(NULL, ":");
-	}
-	sscanf(t, "%d", &stoi);
-	return stoi;
-}
+
 int main()
 {
 	int err1,err2,j;
