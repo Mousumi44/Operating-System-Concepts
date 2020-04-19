@@ -26,7 +26,16 @@ int main(int argc, char * argv[]) {
   readImage("image1.img"); 
   makeFreeList(); 
   cpmDir(); 
-  printFreeList(); 
+  printFreeList();
+
+  
+  //Test for checkLegalName
+  char *name ="abcde.t";
+  bool x = checkLegalName(name);
+  printf("\nTest: %d\n",x);
+
+  
+
   //cpmDelete("shortf.ps");
   //cpmDir();
   //cpmRename("mytestf1.txt","mytest2.tx");
