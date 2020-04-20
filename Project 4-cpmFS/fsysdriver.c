@@ -30,10 +30,10 @@ int main(int argc, char * argv[]) {
 
   
   //Test for checkLegalName
-  char *name ="abcde.t";
+  char *name ="mytestf1";
   bool x = checkLegalName(name);
   printf("\nTest: %d\n",x);
-
+  
   
 
   //cpmDelete("shortf.ps");

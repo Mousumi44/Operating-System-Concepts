@@ -165,7 +165,6 @@ void makeFreeList()
 		}
 	}
 
-
 }
 
 void printFreeList()
@@ -231,43 +230,47 @@ bool checkLegalName(char *name)
 {
 	int i=0;
 
-	for(;i<8;i++)
+
+	for(;i<8 && name[i]!='.' && name[i]!='\0';i++)
 	{
-		if(name[i]!='.' && name[i]!='\0')
+		//name only have letter and digit
+		if(name[i]<'0' || (name[i]>'9' && name[i] <'A') || (name[i] > 'Z' && name[i]<'a') || name[i] > 'z')
 		{
-			//name only have letter and digit
-			if(name[i]<'0' || (name[i]>'9' && name[i] <'A') || (name[i] > 'Z' && name[i]<'a') || name[i] > 'z')
-			{
-				return false;
-			}
+
+			return false;
 		}
 	}
+
+
 	
-	if(i==8 && name[i] !='\0' && name[i]!='.') return false;
+	if(i==8 && name[i]!='\0' && name[i]!='.')
+	{		
+		return false;
+	} 
+	
 
 	//check legal extension name	
 	else if(name[i]=='.')
 	{
+		i++;	
 		int j=0;
 		//start checking extension name after .
-		i++;
-
-		for(;j<3;j++)
+		for(;j<3 && name[i]!='\0';j++)
 		{
-			if(name[i] != '\0')
+			if(name[i]<'0' || (name[i]>'9' && name[i] <'A') || (name[i] > 'Z' && name[i]<'a') || name[i] > 'z')
 			{
-				if(name[i]<'0' || (name[i]>'9' && name[i] <'A') || (name[i] > 'Z' && name[i]<'a') || name[i] > 'z')
-				{
-						return false;
-				}
-
+					return false;
 			}
 			
 			i++;
 
 		}
 
-		if(name[i]!='\0' && j<=3) return false;
+		if(name[i]!='\0' && j==3)
+		{
+			
+			return false;
+		} 
 
 	}
 
