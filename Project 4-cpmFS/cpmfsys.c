@@ -25,41 +25,40 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 	{
 		ch = (e+index*EXTENT_SIZE)[i];
 		(d->name)[i-1] = ch;
-
-		if(ch == ' ') break;
+		if(ch == ' ') break;	
 	}
-
-	if((i==9) && ch!=' ')
+	if(i<9 && ch ==' ')
 	{
-		(d->name)[i-1] = '\0';
+		d->name[i-1] = '\0';
 	}
-	else
+	if(i==9)
 	{
-		(d->name)[i-2] = '\0';
+		(d->name)[i] = '\0';
 	}
-
+	
+	//printf("File Name: %s\n", d->name);
 
 	//copy extension from Block0 to DirStruct
+	int extCount=0;
 	i=9;
 	for( ; i<12; i++)
 	{
 		ch = (e+index*EXTENT_SIZE)[i];
 		(d->extension)[i-9] = ch;
-
-		if(ch == ' ') break;
+		extCount++;
+		if(ch==' ') break;
 
 	}
-
-	if(ch == ' ')
+	if(extCount<3 && ch == ' ')
 	{
 		(d->extension)[i-10] = '\0';
 	}
-	else
+	if(extCount==3)
 	{
 		(d->extension)[i-9] = '\0';
 	}
 
-	//printf("File Name: %s.%s\n", d->name, d->extension);
+	//printf("Extension Name: %s\n", d->extension);
 
 	//copy XL,BC,XH,RC from Block0 to DirStruct
 	d->XL = (e+index*EXTENT_SIZE)[12];

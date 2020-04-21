@@ -28,12 +28,12 @@ int main(int argc, char * argv[]) {
   cpmDir(); 
   printFreeList();
 
-  
+  /*  
   //Test for checkLegalName
-  char *name ="mytestf1";
+  char *name ="mytestf1.txt";
   bool x = checkLegalName(name);
   printf("\nTest: %d\n",x);
-  
+  */
   
 
   //cpmDelete("shortf.ps");
