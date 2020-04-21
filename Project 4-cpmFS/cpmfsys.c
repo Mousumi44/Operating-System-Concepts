@@ -1,5 +1,6 @@
 #include "cpmfsys.h"
 #include "disksimulator.h"
+#include <string.h>
 
 
 #define EMPTY_BLOCK 0
@@ -129,7 +130,7 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 }
 void makeFreeList()
 {
-	uint8_t dirStructBuffer[BLOCK_SIZE];
+	uint8_t block0[BLOCK_SIZE];
 
 	//set all blocks free initially
 	for (int i = 0; i < NUM_BLOCKS; i++)
@@ -139,12 +140,13 @@ void makeFreeList()
 	}
 
 	//load block0 to main memory
-	blockRead(dirStructBuffer, (uint8_t) 0);
+	blockRead(block0, (uint8_t) 0);
 
 	DirStructType *cpm_dir;
 	for(int i=0; i<Extent_NO;i++ )
 	{
-		cpm_dir=mkDirStruct(i, dirStructBuffer);
+		cpm_dir= malloc(sizeof(DirStructType));
+		cpm_dir=mkDirStruct(i, block0);
 
 		//compute filesize for used extents
 		if(cpm_dir->status!=0xe5)
@@ -188,17 +190,18 @@ void printFreeList()
 
 void cpmDir()
 {
-	uint8_t dirStructBuffer[BLOCK_SIZE];
+	uint8_t block0[BLOCK_SIZE];
 	
 	//load block0 to main memory
-	blockRead(dirStructBuffer, (uint8_t) 0);
+	blockRead(block0, (uint8_t) 0);
 
 	printf("DIRECTORY LISTING\n");
 
 	DirStructType *cpm_dir;
 	for(int i=0; i<Extent_NO;i++ )
 	{
-		cpm_dir=mkDirStruct(i, dirStructBuffer);
+		cpm_dir= malloc(sizeof(DirStructType));
+		cpm_dir=mkDirStruct(i, block0);
 		int filesize = 0;
 
 		//compute filesize for used extents
@@ -241,7 +244,7 @@ bool checkLegalName(char *name)
 	}
 
 
-	
+	//file name too long
 	if(i==8 && name[i]!='\0' && name[i]!='.')
 	{		
 		return false;
@@ -265,6 +268,8 @@ bool checkLegalName(char *name)
 
 		}
 
+
+		//extension name too long
 		if(name[i]!='\0' && j==3)
 		{
 			
@@ -274,4 +279,128 @@ bool checkLegalName(char *name)
 	}
 
 	return true;
+}
+
+//returns -1 for illegal name; otherwise returns extent number 0-31
+int findExtentWithName(char *name, uint8_t *block0)
+{
+	//split up the name into file_name, ext_name
+	char file_name[9];
+	char ext_name[4];
+	if(!checkLegalName(name))
+	{
+		return -1;
+	}
+
+	int i=0;
+	for(;i<8;i++)
+	{
+		file_name[i]=name[i];
+		if(name[i]=='\0' || name[i]=='.') break;
+	}
+
+	//pad '\0' to file name
+	file_name[i]='\0';
+
+	//check file name
+	//printf("%s\n", file_name);
+
+
+	//check ext_name
+	if(name[i]=='.')
+	{
+		//ahead pointer to ext char
+		i++;
+
+		int extCount=0;
+		for(;extCount<3;extCount++)
+		{
+			ext_name[extCount]=name[i];
+			i++;
+		}
+		ext_name[extCount]='\0';
+
+		//check extension name
+		//printf("%s\n", ext_name);
+	}
+
+	//for all extents in block0
+	DirStructType *cpm_dir;
+	for(int j=0;j<Extent_NO;j++)
+	{
+		//obtain dir j from block0
+		
+		cpm_dir=mkDirStruct(j, block0);		
+		if(cpm_dir->status!=0xe5 && !strcmp(cpm_dir->name,file_name) && !strcmp(cpm_dir->extension,ext_name))
+		{
+			return j;
+		}
+
+	}
+
+	return -1;;
+}
+
+// delete the file named name, and free its disk blocks in the free list 
+int  cpmDelete(char * name)
+{
+	uint8_t block0[BLOCK_SIZE];
+	
+	//load block0 to main memory
+	blockRead(block0, (uint8_t) 0);
+	int i;
+	i=findExtentWithName(name,block0);
+	if(i<0)
+	{
+		//printf("file not found or illegal file name\n");
+		//file not found or illegal file name
+		return i;
+	}
+	else
+	{
+		//file found
+		//printf("file found in extent %d\n",i);
+		DirStructType *cpm_dir;
+		cpm_dir=mkDirStruct(i, block0);	
+
+		//mark 16 file blocks free in free list
+		for(int j=0;j<FILE_BLOCK_SIZE;j++)
+		{
+			// set freeList[i] == true for the used block
+			if(cpm_dir->blocks[j] != EMPTY_BLOCK)
+			{
+				freeList[(int) cpm_dir->blocks[j]] = true;
+			}
+
+			//set all file blocks as empty block
+			cpm_dir->blocks[j] = EMPTY_BLOCK;
+
+		}
+
+		//set status as unused
+		block0[i*EXTENT_SIZE] = 0xe5;
+
+		//write modified block0 to disk
+		blockWrite(block0,(uint8_t) 0);
+
+		//printf("file deleted\n");
+		//file found and deleted successfully
+		return 1;
+	}
+}
+
+// modify the extent for file named oldName with newName, and write to the disk
+int cpmRename(char *oldName, char * newName)
+{
+	if(!checkLegalName(oldName) || !checkLegalName(newName)) return -1;
+	
+	uint8_t block0[BLOCK_SIZE];
+	
+	//load block0 to main memory
+	blockRead(block0, (uint8_t) 0);
+
+	if(findExtentWithName(oldName,block0)<0) return -1;
+	
+	return 0;
+
 }

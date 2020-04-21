@@ -1,0 +1,4 @@
+There is a bug in findExtentWithName(char *name, uint8_t *block0) function, it can't find out Extent Number of file "mytestf." I can't figure that out.
+
+In  printFreeList(), it doesn't print * for the first block of block0.
+
