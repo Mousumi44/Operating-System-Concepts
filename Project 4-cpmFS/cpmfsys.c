@@ -28,6 +28,8 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 		(d->name)[i-1] = ch;
 		if(ch == ' ') break;	
 	}
+
+
 	if(i<9 && ch ==' ')
 	{
 		d->name[i-1] = '\0';
@@ -54,7 +56,7 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 	{
 		(d->extension)[i-10] = '\0';
 	}
-	if(extCount==3)
+	else
 	{
 		(d->extension)[i-9] = '\0';
 	}
