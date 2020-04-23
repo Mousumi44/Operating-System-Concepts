@@ -54,11 +54,11 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 	}
 	if(extCount<3 && ch == ' ')
 	{
-		(d->extension)[i-10] = '\0';
+		(d->extension)[i-9] = '\0';
 	}
 	else
 	{
-		(d->extension)[i-9] = '\0';
+		(d->extension)[i-8] = '\0';
 	}
 
 	//printf("Extension Name: %s\n", d->extension);
@@ -83,6 +83,8 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 
 void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 {
+	//printf("%s\n", d->name);
+	//printf("%s\n",d->extension);
 
 	(e+index*EXTENT_SIZE)[0] = d->status;
 
@@ -97,16 +99,16 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 	    if(d->name[i-1] == '.') break;
 	}
 
+	// pad with blanks
 	if(i<9)
 	{
-	  // pad with blanks
-	  for(;i<9;i++) 
-	  {
-	    (e+index*EXTENT_SIZE)[i] = ' ';
-	  }
+		for(;i<9;i++) 
+		{
+		    (e+index*EXTENT_SIZE)[i] = ' ';
+		}
 
 	}
-  
+	 
     extCount= 0;
     while(d->extension[extCount] != '\0') 
     {
@@ -115,14 +117,17 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
     	extCount++;
   	}
 
-    if(i<12)
-    {
-    	for(;i<12;i++) 
-    	{ 
-    		(e+index*EXTENT_SIZE)[i] = ' ';
-  		}
+  	if(i<12)
+  	{
+  		for(;i<12;i++) 
+	    { 
+	    	(e+index*EXTENT_SIZE)[i] = ' ';
+	  	}
 
-    }
+  	}
+
+  	
+
 
 	////Copy XL,BC,XH,RC to Block0
 	(e+index*EXTENT_SIZE)[12] = d->XL;
@@ -132,6 +137,14 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 
 	//copy all 16 bytes of file blocks to Block0
 	memcpy(e+index*EXTENT_SIZE+FILE_BLOCK_SIZE, d->blocks, FILE_BLOCK_SIZE);
+
+	/*
+
+	for(int c=1; c<14;c++)
+	{
+		printf("%c", (e+index*EXTENT_SIZE)[c]);	
+	}
+	*/
 }
 void makeFreeList()
 {
@@ -420,9 +433,9 @@ int cpmRename(char *oldName, char * newName)
 
 	else
 	{
-				//load extent with oldName from Block0 to DirStruct 
-			// fileExtentwithName finds the index(i) of extent with oldName
-			//mkDirStruct copies ith extent to DirStruct
+			//load extent with oldName from Block0 to DirStruct 
+				// fileExtentwithName finds the index(i) of extent with oldName
+				//mkDirStruct copies ith extent to DirStruct
 		DirStructType *cpm_dir;
 		cpm_dir=mkDirStruct(j, block0);	
 
