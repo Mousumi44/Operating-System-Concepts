@@ -405,7 +405,7 @@ int cpmRename(char *oldName, char * newName)
 {
 	if(!checkLegalName(newName)) return -1;
 	
-	uint8_t block0[BLOCK_SIZE];
+	uint8_t *block0=malloc(BLOCK_SIZE);
 	
 	//load block0 to main memory
 	blockRead(block0, (uint8_t) 0);
@@ -414,98 +414,106 @@ int cpmRename(char *oldName, char * newName)
 
 	if(j<0) return -1;
 
-	//load extent with oldName from Block0 to DirStruct 
-		// fileExtentwithName finds the index(i) of extent with oldName
-		//mkDirStruct copies ith extent to DirStruct
-	DirStructType *cpm_dir;
-	cpm_dir=mkDirStruct(j, block0);	
-
-	printf("old file name: %s\n",cpm_dir->name);
-	printf("old extension: %s\n", cpm_dir->extension);
-	
-	//modify file_name and extension of the extent of block0 according to newName
-		//Step1: separate fileName and extension of newName
-		//Step2: modify old fileName to the extent of block0
-		//Step3:  modify old extension to the extent of block0
-
-		//Step1
-	char file_name[9];
-	char ext_name[4];
-	int i=0;
-	for(;i<8;i++)
+	else
 	{
-		file_name[i]=newName[i];
-		if(newName[i]=='\0' || newName[i]=='.') break;
-	}
+				//load extent with oldName from Block0 to DirStruct 
+			// fileExtentwithName finds the index(i) of extent with oldName
+			//mkDirStruct copies ith extent to DirStruct
+		DirStructType *cpm_dir;
+		cpm_dir=mkDirStruct(j, block0);	
 
-	//pad '\0' to file name
-	file_name[i]='\0';
+		//printf("old file name: %s\n",cpm_dir->name);
+		//printf("old extension: %s\n", cpm_dir->extension);
+		
+		//modify file_name and extension of the extent of block0 according to newName
+			//Step1: separate fileName and extension of newName
+			//Step2: modify old fileName to the extent of block0
+			//Step3:  modify old extension to the extent of block0
 
-	//check file name
-	printf("new file name: %s\n", file_name);
-
-
-	//check ext_name
-	if(newName[i]=='.')
-	{
-		//ahead pointer to ext char
-		i++;
-
-		int extCount=0;
-		for(;extCount<3;extCount++)
+			//Step1
+		char file_name[9];
+		char ext_name[4];
+		int i=0;
+		for(;i<8;i++)
 		{
-			ext_name[extCount]=newName[i];
-			i++;
+			file_name[i]=newName[i];
+			if(newName[i]=='\0' || newName[i]=='.') break;
 		}
-		ext_name[extCount]='\0';
 
-		//check extension name
-		printf("new extension: %s\n", ext_name);
-	}
+		//pad '\0' to file name
+		file_name[i]='\0';
+
+		//check file name
+		//printf("new file name: %s\n", file_name);
 
 
-		//Step2	
-	int o=0;
-	while(file_name[o]!='\0' && file_name[o] != '.')
-	{
-		cpm_dir->name[o]=file_name[o];
-		o++;
-	}
-
-	//if name length<8 pad with ' '
-	if(o<8)
-	{
-		while(o<8)
+		//check ext_name
+		if(newName[i]=='.')
 		{
-			cpm_dir->name[o]=' ';
+			//ahead pointer to ext char
+			i++;
+
+			int extCount=0;
+			for(;extCount<3;extCount++)
+			{
+				ext_name[extCount]=newName[i];
+				i++;
+			}
+			ext_name[extCount]='\0';
+
+			//check extension name
+			//printf("new extension: %s\n", ext_name);
+		}
+
+
+			//Step2	
+		int o=0;
+		while(file_name[o]!='\0' && file_name[o] != '.')
+		{
+			cpm_dir->name[o]=file_name[o];
 			o++;
 		}
-	}
-	
-		//step3
-	int c=0;
-	while(ext_name[c]!='\0')
-	{
-		cpm_dir->extension[c]=ext_name[c];
-		c++;
 
-	}
-
-	//if extension length<3 pad with ' '
-	if(c<3)
-	{
-		while(c<3)
+		//if name length<8 pad with ' '
+		if(o<8)
 		{
-			cpm_dir->extension[c]=' ';
-			c++;
+			while(o<8)
+			{
+				cpm_dir->name[o]=' ';
+				o++;
+			}
 		}
+		
+			//step3
+		int c=0;
+		while(ext_name[c]!='\0')
+		{
+			cpm_dir->extension[c]=ext_name[c];
+			c++;
+
+		}
+
+		//if extension length<3 pad with ' '
+		if(c<3)
+		{
+			while(c<3)
+			{
+				cpm_dir->extension[c]=' ';
+				c++;
+			}
+		}
+		//printf("modified file name: %s\n",cpm_dir->name);
+		//printf("modified extension: %s\n", cpm_dir->extension);
+
+		//uint8_t *e=malloc(BLOCK_SIZE);
+		writeDirStruct(cpm_dir, j, block0);
+		blockWrite(block0,0);
+
+
+
+		//Write Block0 to Disk (blockWrite does this)	
+		return 0;
+
 	}
-	printf("modified file name: %s\n",cpm_dir->name);
-	printf("modified extension: %s\n", cpm_dir->extension);
-
-
-
-	//Write Block0 to Disk (blockWrite does this)	
-	return 0;
 
 }

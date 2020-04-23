@@ -29,9 +29,9 @@ int main(int argc, char * argv[]) {
   printFreeList();
   cpmDelete("shortf.ps");
   cpmDir();
-  //cpmRename("mytestf1.txt","mytest2.tx");
-  //printf("cpmRename return code = %d,\n",cpmRename("mytestf","mytestv2.x")); 
-  //cpmDir(); 
+  cpmRename("mytestf1.txt","mytest2.tx");
+  printf("cpmRename return code = %d,\n",cpmRename("mytestf","mytestv2.x")); 
+  cpmDir(); 
   printFreeList(); 
 
   /*
@@ -42,8 +42,8 @@ int main(int argc, char * argv[]) {
   */
 
   //Test for cpmRename
-  printf("\nTest for cpmRename: %d\n",cpmRename("mytestf1.txt","mytest2.tx"));
-  printf("\nTest for cpmRename: %d\n",cpmRename("mytestf","mytestv2.tx"));
+  //printf("\nTest for cpmRename: %d\n",cpmRename("mytestf1.txt","mytest2.tx"));
+  //printf("\nTest for cpmRename: %d\n",cpmRename("mytestf","mytestv2.tx"));
   
 }
 
