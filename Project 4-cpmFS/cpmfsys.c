@@ -81,47 +81,46 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 
 void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 {
-	////Copy status to Block0
+
 	(e+index*EXTENT_SIZE)[0] = d->status;
 
-	//Copy fileName to Block0
-	int i=1;
-	while(d->name[i-1]!='\0' && d->name[i-1] != '.')
+	int i;
+  	int extCount;
+
+  	i = 1;
+	for(;d->name[i-1] != '\0';i++) 
 	{
-		(e+index*EXTENT_SIZE)[i] = d->name[i-1];
-		i++;
+	    (e+index*EXTENT_SIZE)[i] = d->name[i-1];
+
+	    if(d->name[i-1] == '.') break;
 	}
 
-	//if name length<8 pad with ' '
 	if(i<9)
 	{
-		while(i<9)
-		{
-			(e+index*EXTENT_SIZE)[i]=' ';
-			i++;
-		}
-	}
-
-	//Copy Extension to Block0
-	int c=0;
-	while(d->extension[c]!='\0')
-	{
-		(e+index*EXTENT_SIZE)[i] = d->extension[i-1];
-		i++;
-		c++;
+	  // pad with blanks
+	  for(;i<9;i++) 
+	  {
+	    (e+index*EXTENT_SIZE)[i] = ' ';
+	  }
 
 	}
+  
+    extCount= 0;
+    while(d->extension[extCount] != '\0') 
+    {
+    	(e+index*EXTENT_SIZE)[i] = d->extension[extCount];
+    	i++;  
+    	extCount++;
+  	}
 
-	//if extension length<3 pad with ' '
-	if(i<12)
-	{
-		while(i<12)
-		{
-			(e+index*EXTENT_SIZE)[i]=' ';
-			i++;
-		}
-	}
+    if(i<12)
+    {
+    	for(;i<12;i++) 
+    	{ 
+    		(e+index*EXTENT_SIZE)[i] = ' ';
+  		}
 
+    }
 
 	////Copy XL,BC,XH,RC to Block0
 	(e+index*EXTENT_SIZE)[12] = d->XL;
@@ -142,6 +141,9 @@ void makeFreeList()
 		freeList[i]=true;
 		
 	}
+
+	//no one use this so explicitly mention this
+	freeList[0]=false;
 
 	//load block0 to main memory
 	blockRead(block0, (uint8_t) 0);
