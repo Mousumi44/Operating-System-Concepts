@@ -27,20 +27,23 @@ int main(int argc, char * argv[]) {
   makeFreeList(); 
   cpmDir(); 
   printFreeList();
-
-  /*  
-  //Test for checkLegalName
-  char *name ="mytestf1.txt";
-  bool x = checkLegalName(name);
-  printf("\nTest: %d\n",x);
-  */
-  
-
   cpmDelete("shortf.ps");
   cpmDir();
-  cpmRename("mytestf1.txt","mytest2.tx");
+  //cpmRename("mytestf1.txt","mytest2.tx");
   //printf("cpmRename return code = %d,\n",cpmRename("mytestf","mytestv2.x")); 
   //cpmDir(); 
-  //printFreeList(); 
+  printFreeList(); 
+
+  /*
+  //Test for checkLegalName
+  char *name ="mytestf.";
+  bool x = checkLegalName(name);
+  printf("\nTest for checkLegalName: %d\n",x);
+  */
+
+  //Test for cpmRename
+  printf("\nTest for cpmRename: %d\n",cpmRename("mytestf1.txt","mytest2.tx"));
+  printf("\nTest for cpmRename: %d\n",cpmRename("mytestf","mytestv2.tx"));
+  
 }
 
