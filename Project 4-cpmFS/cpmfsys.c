@@ -11,15 +11,17 @@ bool freeList[NUM_BLOCKS];
 //Copy DirStruct/Extent of index from Block0
 DirStructType *mkDirStruct(int index,uint8_t *e)
 {
+	//create memory space for dir
 	DirStructType *d;
 	d = malloc(sizeof(DirStructType));
 	
-	//copy status from Block0 to DirStruct
+	//obtain status from in-memory Block0
 	d->status = (e+index*EXTENT_SIZE)[0];
 
 	//printf("DirStruct %x, status=%x\n", index, d->status);
 
-	//copy name from Block0 to DirStruct
+	//obtain name from in-memory Block0
+	//If name length <8, padded by ' '
 	int i=1;
 	char ch;
 	for(; i<9; i++)
@@ -41,7 +43,7 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 	
 	//printf("File Name: %s\n", d->name);
 
-	//copy extension from Block0 to DirStruct
+	//obtain dir->extension from in-memory Block0
 	int extCount=0;
 	i=9;
 	for( ; i<12; i++)
@@ -63,7 +65,7 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 
 	//printf("Extension Name: %s\n", d->extension);
 
-	//copy XL,BC,XH,RC from Block0 to DirStruct
+	//obtain XL,BC,XH,RC from from in-memory Block0
 	d->XL = (e+index*EXTENT_SIZE)[12];
 	d->BC = (e+index*EXTENT_SIZE)[13];
 	d->XH = (e+index*EXTENT_SIZE)[14];
@@ -71,9 +73,11 @@ DirStructType *mkDirStruct(int index,uint8_t *e)
 
 	//printf("XL=%x, RC= %x, XH=%x, BC=%x\n", d->XL, d->RC, d->XH, d->BC);
 
-	//copy all 16 bytes of fileblocks from Block0 to DirStruct
+	//obtain all 16 fileblocks from in-memory Block0
 	memcpy(d->blocks, e+index*EXTENT_SIZE+FILE_BLOCK_SIZE , FILE_BLOCK_SIZE);
 
+
+	//return dir
 	return d;
 
 }
@@ -86,10 +90,15 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 	//printf("%s\n", d->name);
 	//printf("%s\n",d->extension);
 
+	//write status from DirStruct to in-memory Block0
+
 	(e+index*EXTENT_SIZE)[0] = d->status;
 
 	int i;
   	int extCount;
+
+  	//write name from DirStruct to in-memory Block0
+    //If name length <8, pad with ' '
 
   	i = 1;
 	for(;d->name[i-1] != '\0';i++) 
@@ -108,7 +117,9 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 		}
 
 	}
-	 
+
+	//write extension from DirStruct to in-memory Block0
+
     extCount= 0;
     while(d->extension[extCount] != '\0') 
     {
@@ -126,50 +137,42 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e)
 
   	}
 
-  	
-
-
-	////Copy XL,BC,XH,RC to Block0
+	//write XL,BC,XH,RC from DirStruct to in-memory Block0
 	(e+index*EXTENT_SIZE)[12] = d->XL;
 	(e+index*EXTENT_SIZE)[13] = d->BC;
 	(e+index*EXTENT_SIZE)[14] = d->XH;
 	(e+index*EXTENT_SIZE)[15] = d->RC;
 
-	//copy all 16 bytes of file blocks to Block0
+	//write all 16 file blocks from DirStruct to in-memory Block0
 	memcpy(e+index*EXTENT_SIZE+FILE_BLOCK_SIZE, d->blocks, FILE_BLOCK_SIZE);
 
-	/*
-
-	for(int c=1; c<14;c++)
-	{
-		printf("%c", (e+index*EXTENT_SIZE)[c]);	
-	}
-	*/
 }
 void makeFreeList()
 {
 	uint8_t block0[BLOCK_SIZE];
 
-	//set all blocks free initially
+	//initially set all blocks as free
 	for (int i = 0; i < NUM_BLOCKS; i++)
 	{
 		freeList[i]=true;
 		
 	}
 
-	//no one use this so explicitly mention this
+	//set blocko as occupied
 	freeList[0]=false;
 
 	//load block0 to main memory
 	blockRead(block0, (uint8_t) 0);
 
 	DirStructType *cpm_dir;
+
+	//for (all i extent in block 0)
 	for(int i=0; i<Extent_NO;i++ )
 	{
 		cpm_dir= malloc(sizeof(DirStructType));
 		cpm_dir=mkDirStruct(i, block0);
 
-		//compute filesize for used extents
+		//if (dir is used)
 		if(cpm_dir->status!=0xe5)
 		{
 			
@@ -213,19 +216,21 @@ void cpmDir()
 {
 	uint8_t block0[BLOCK_SIZE];
 	
-	//load block0 to main memory
+	//read block0 into cpm
 	blockRead(block0, (uint8_t) 0);
 
 	printf("DIRECTORY LISTING\n");
 
 	DirStructType *cpm_dir;
+
+	//for all the extent referred by index in cpm_block0
 	for(int i=0; i<Extent_NO;i++ )
 	{
 		cpm_dir= malloc(sizeof(DirStructType));
 		cpm_dir=mkDirStruct(i, block0);
 		int filesize = 0;
 
-		//compute filesize for used extents
+		//if cpm_dir->status is used
 		if(cpm_dir->status!=0xe5)
 		{
 			//count fully used file blocks
@@ -239,9 +244,14 @@ void cpmDir()
 
 			}
 
+
+			//compute partially used file block size
 			int partial_flieblock = ((int) cpm_dir->RC)*128 + (int)cpm_dir->BC;
+
+			//compute file length
 			filesize = (NB-1)*BLOCK_SIZE + partial_flieblock;
 
+			//print file name and length from cpm
 			printf("%s.%s %d\n", cpm_dir->name,cpm_dir->extension,filesize);
 
 		}
@@ -256,7 +266,7 @@ bool checkLegalName(char *name)
 
 	for(;i<8 && name[i]!='.' && name[i]!='\0';i++)
 	{
-		//name only have letter and digit
+		//name can only have letter and digit
 		if(name[i]<'0' || (name[i]>'9' && name[i] <'A') || (name[i] > 'Z' && name[i]<'a') || name[i] > 'z')
 		{
 
@@ -265,19 +275,20 @@ bool checkLegalName(char *name)
 	}
 
 
-	//file name too long
+	//check for too long file name
 	if(i==8 && name[i]!='\0' && name[i]!='.')
 	{		
 		return false;
 	} 
 	
 
-	//check legal extension name	
+	//check for legal extension name	
 	else if(name[i]=='.')
 	{
 		i++;	
 		int j=0;
-		//start checking extension name after .
+		
+		//extension can only have letter and digit
 		for(;j<3 && name[i]!='\0';j++)
 		{
 			if(name[i]<'0' || (name[i]>'9' && name[i] <'A') || (name[i] > 'Z' && name[i]<'a') || name[i] > 'z')
@@ -290,7 +301,7 @@ bool checkLegalName(char *name)
 		}
 
 
-		//extension name too long
+		//check for too long extension name
 		if(name[i]!='\0' && j==3)
 		{
 			
@@ -308,6 +319,8 @@ int findExtentWithName(char *name, uint8_t *block0)
 	//split up the name into file_name, ext_name
 	char file_name[9];
 	char ext_name[4];
+
+	//check legal file name, no blanks/punctuation/control chars
 	if(!checkLegalName(name))
 	{
 		return -1;
@@ -327,7 +340,7 @@ int findExtentWithName(char *name, uint8_t *block0)
 	//printf("\nfile name: %s\n", file_name);
 
 
-	//check ext_name
+	//check legal ext_name
 	if(name[i]=='.')
 	{
 		//ahead pointer to ext char
@@ -345,7 +358,7 @@ int findExtentWithName(char *name, uint8_t *block0)
 		//printf("\nextension: %s\n\n", ext_name);
 	}
 
-	//for all extents in block0
+	//for all dir entries in block0
 	
 	for(int j=0;j<Extent_NO;j++)
 	{
@@ -356,10 +369,13 @@ int findExtentWithName(char *name, uint8_t *block0)
 		//printf("strcmp extension: %d \n", strcmp(cpm_dir->name,ext_name));
 
 
+		//if dir->name==file_name
 		if(!strcmp(cpm_dir->name,file_name))
 		{
+			//if dir->status==valid
 			if(cpm_dir->status==0xe5) return -1;
-
+			
+			//only return the index of the extent
 			//printf("Extent number: %d\n", j);
 			return j;
 		}
@@ -370,6 +386,7 @@ int findExtentWithName(char *name, uint8_t *block0)
 }
 
 // delete the file named name, and free its disk blocks in the free list 
+// return -1  if can't be deleted and 1 if delelted successfully
 int  cpmDelete(char * name)
 {
 	uint8_t block0[BLOCK_SIZE];
@@ -378,15 +395,18 @@ int  cpmDelete(char * name)
 	blockRead(block0, (uint8_t) 0);
 	int i;
 	i=findExtentWithName(name,block0);
+
+	//if file not found or illegal file name
 	if(i<0)
 	{
 		//printf("file not found or illegal file name\n");
-		//file not found or illegal file name
+		//returns -1
 		return i;
 	}
+
+	// else if file found
 	else
 	{
-		//file found
 		//printf("file found in extent %d\n",i);
 		DirStructType *cpm_dir;
 		cpm_dir=mkDirStruct(i, block0);	
@@ -400,7 +420,7 @@ int  cpmDelete(char * name)
 				freeList[(int) cpm_dir->blocks[j]] = true;
 			}
 
-			//set all file blocks as empty block
+			//set all file blocks as empty block so that further can be used 
 			cpm_dir->blocks[j] = EMPTY_BLOCK;
 
 		}
@@ -412,30 +432,37 @@ int  cpmDelete(char * name)
 		blockWrite(block0,(uint8_t) 0);
 
 		//printf("file deleted\n");
-		//file found and deleted successfully
+		
+
+		//if extent deleted successfully return 1
 		return 1;
 	}
 }
 
 // modify the extent for file named oldName with newName, and write to the disk
+//returns -1 if can't be modified or 0 if modified successfully
 int cpmRename(char *oldName, char * newName)
 {
+	//if newName is illegal return -1 
 	if(!checkLegalName(newName)) return -1;
 	
 	uint8_t *block0=malloc(BLOCK_SIZE);
 	
-	//load block0 to main memory
+	//load block0 from disk to in-memory
 	blockRead(block0, (uint8_t) 0);
 
 	int j = findExtentWithName(oldName,block0);
 
+
+	//if extent with oldName doesn't exist return -1
 	if(j<0) return -1;
 
+
+	//else if extent with oldName found rename it
 	else
 	{
-			//load extent with oldName from Block0 to DirStruct 
-				// fileExtentwithName finds the index(i) of extent with oldName
-				//mkDirStruct copies ith extent to DirStruct
+			
+		//write extent with oldName from in-memory Block0 to DirStruct 
 		DirStructType *cpm_dir;
 		cpm_dir=mkDirStruct(j, block0);	
 
@@ -443,11 +470,9 @@ int cpmRename(char *oldName, char * newName)
 		//printf("old extension: %s\n", cpm_dir->extension);
 		
 		//modify file_name and extension of the extent of block0 according to newName
-			//Step1: separate fileName and extension of newName
-			//Step2: modify old fileName to the extent of block0
-			//Step3:  modify old extension to the extent of block0
 
-			//Step1
+    	//Step1: separate fileName and extension of newName
+
 		char file_name[9];
 		char ext_name[4];
 		int i=0;
@@ -483,7 +508,8 @@ int cpmRename(char *oldName, char * newName)
 		}
 
 
-			//Step2	
+		//Step2: modify oldName to newName in DirStruct
+
 		int o=0;
 		while(file_name[o]!='\0' && file_name[o] != '.')
 		{
@@ -501,7 +527,7 @@ int cpmRename(char *oldName, char * newName)
 			}
 		}
 		
-			//step3
+		
 		int c=0;
 		while(ext_name[c]!='\0')
 		{
@@ -519,16 +545,18 @@ int cpmRename(char *oldName, char * newName)
 				c++;
 			}
 		}
+
+		//check whether DirStruct has been modified with newName
 		//printf("modified file name: %s\n",cpm_dir->name);
 		//printf("modified extension: %s\n", cpm_dir->extension);
 
-		//uint8_t *e=malloc(BLOCK_SIZE);
+		//Step3: write DirStruct to in-memory block0
 		writeDirStruct(cpm_dir, j, block0);
 		blockWrite(block0,0);
 
 
 
-		//Write Block0 to Disk (blockWrite does this)	
+		//Step4: write modified in-memory block0 to disk	
 		return 0;
 
 	}
